@@ -94,7 +94,7 @@ def load_data(data_dir):
     :return: {'uuid':['text', '0 or 1 or 2']}
     """
     wb = load_workbook(data_dir)
-    ws = wb.get_sheet_by_name('微博')
+    ws = wb.get_sheet_by_name('Sheet1')
     data_dict = {}
     for i in range(1, ws.max_row):
         try:
@@ -273,6 +273,7 @@ def Boson_Dict_Method(data_dir, boson_dir, sentiment_dir1, sentiment_dir2, senti
 
 if __name__ == "__main__":
     globals()
+    # select the best config
     upper_list = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]
     lower_list = [-0.5, -1, -1.5, -2, -2.5, -3, -3.5, -4]
     ratio_list = []
