@@ -1,5 +1,5 @@
 # Short-Texts-Sentiment-Analyse
-## Emotional Analyse of Chinese Short Texts with Several Method
+## Emotional Analysis of Chinese Short Texts with Several Methods
 
 # 基于中文短文本的情感分析对比实验
 ---
