@@ -57,15 +57,44 @@
 
 1. 情感词典
 
-  实验步骤分为两方面：<br>1.直接利用boson情感词典（也可以替换data中的数据，找到网上其他的字典或者自行构建的情感词典，格式保持跟data.txt中的一致即可），查看boson情感词典的正负中的召回率
+  实验步骤分为两方面：<br>1.直接利用boson情感词典（也可以替换data中的数据，找到网上其他的字典或者自行构建的情感词典，格式保持跟data.txt中的一致即可），查看boson情感词典的正负中的召回率<br>
+  通过对比结果看出单纯的boson情感词典效果很差，而采用了情感副词以及添加否定词的boson情感词典方法的效果大大优于单纯的情感词典方法，但其结果仍然不乐观，基本recall也就在30~50%之间（略高于随机选择），但是其对于强正向和强负向区分能力较高，但是对于包含多个情感词的句子没什么分辨能力
 
 2. 机器学习
+在机器学习方法中本文使用以下几种类型的分类器，
   * 逻辑回归
   * 随机梯度下降
   * 朴素贝叶斯
   * 支持向量机
   * 随机森林
-  * XGBoost
+  * XGBoost<br>
+  代码实现过程：<br>
+  首先运行ml_classify.py文件中<br>
+ ```python
+  if __name__ == "__main__":
+
+    # get_tencent_word_embedding()
+    # import random
+    # random.seed(1)
+    # get_sentiment_model()
+    # _test_save_model_validate()
+    # test_x = '新买的手机的信号还可以，没有预期的期望高，不过对于我来说也还可以了'
+    # real_predict(test_x)
+    get_variable_model_test()
+```
+使用其中的`get_variable_model_test()`函数，先debug到下方`json.jump`处,此处是用来获取我们的训练数据。
+ ```python 
+  def get_variable_model_test():
+    get regular train and test data
+    pos_list, neutral_list, neg_list = get_data()
+    train_X, y = build_vecs_tencent(pos_list, neutral_list, neg_list)
+    train_x, test_x, train_y, test_y = train_test_split(train_X, y, test_size = 0.3)
+    train_x = train_x.tolist()
+    test_x = test_x.tolist()
+    train_y = train_y.tolist()
+    test_y = test_y.tolist()
+    json.dump([train_x, test_x, train_y, test_y],open('train_x.json', 'w'))
+  ```
 
 3. 深度学习
 
