@@ -61,7 +61,7 @@
   通过对比结果看出单纯的boson情感词典效果很差，而采用了情感副词以及添加否定词的boson情感词典方法的效果大大优于单纯的情感词典方法，但其结果仍然不乐观，基本recall也就在30~50%之间（略高于随机选择），但是其对于强正向和强负向区分能力较高，但是对于包含多个情感词的句子没什么分辨能力。
 
 2. 机器学习<br>
-  在机器学习方法中本文使用以下几种类型的分类器，
+  在机器学习方法中本文使用以下几种类型的分类器
   * 逻辑回归
   * 随机梯度下降
   * 朴素贝叶斯
@@ -82,7 +82,7 @@
     # real_predict(test_x)
     get_variable_model_test()
 ```
-使用其中的`get_variable_model_test()`函数，先debug到下方`json.jump`处,此处是用来获取我们的训练数据。
+使用其中的`get_variable_model_test()`函数，先debug到下方`json.jump`处,此处是用来将我们存在excel中的文本数据进行清理得到正则化后的数据，并将其进行词向量表示，本文中选取了两种形式，即利用中文维基百科训练的Word2Vec词向量，以及腾讯开源的900W的词向量（之所以没有用BERT进行微调是因为这个是去年9月份写的，那会儿BERT还没出来，后续深度学习中我们会应用BERT句向量）
  ```python 
   def get_variable_model_test():
     get regular train and test data
@@ -95,7 +95,72 @@
     test_y = test_y.tolist()
     json.dump([train_x, test_x, train_y, test_y],open('train_x.json', 'w'))
   ```
-
+<br>而主要的建模过程如下所示
+```python
+def get_tencent_word_embedding():
+    # get tencent word embedding dict for convert phrase
+    start = time.time()
+    tencent_word_matrix = {}
+    data = load_data()
+    for uuid, txt in tqdm(data.items()):
+        cut_txt = jieba.cut(txt[0], cut_all = False)
+        for seg in cut_txt:
+            if seg != '' and seg not in tencent_word_matrix:
+                tencent_word_matrix[seg] = 0
+        # break
+    for i in get_Word2Vec(8824330):
+        if i[0] in tencent_word_matrix:
+            try:
+                if len(i[1::]) == 200 and i[1::] != 0:
+                    tencent_word_matrix[i[0]] = i[1::]
+            except Exception as e:
+                print ('Error type', e,i)
+    with open('tencent_word_embedding_dict.json', 'w') as json_file:
+        json.dump(tencent_word_matrix, json_file)
+    json_file.close()
+    end = time.time()
+    # time almost equal 600s
+    print ('JSON File has been done: ', end - start)
+```
+使用上述迭代读取的方式对腾讯词向量进行建模，并将其转换为json脚本，上面的json是为了保证我们的训练集是采用同一批数据
+```python
+def get_sentiment_model():
+    start = time.time()
+    # stop_word = get_stop_word()
+    # use tencent word embedding
+    pos_list, neutral_list, neg_list = get_data()
+    train_X, y = build_vecs_tencent(pos_list, neutral_list, neg_list)
+    # model = load_Word2Vec_Model()
+    # train_X, y = build_vecs(pos_list, neutral_list, neg_list, stop_word, model)
+    # show the data distribute...it costs too long...
+    # plt_with_tsne(train_X, pos_list, neg_list, neutral_list)
+    train_ratio = 0.2
+    # standardization , tencent word embedding has been done.
+    # train_X = scale(train_X)
+    # plot the PCA spectrum
+    # reduce or not is no necessary
+    # reduce_x = plot_pca(train_X)
+    # reduce_train_x, reduce_test_x, reduce_train_y, reduce_test_y = prepare_train_data(reduce_x, y, train_ratio)
+    train_x, test_x, train_y, test_y = prepare_train_data(train_X, y, train_ratio)
+    # use RandomForest to classify accuracy equal
+    RandomForest_Model(train_x, test_x, train_y, test_y)
+    # use SGD of logistic to classify accuracy equal 0.53
+    sgd_model(train_x, test_x, train_y, test_y)
+    # sgd_model(reduce_train_x, reduce_test_x, reduce_train_y, reduce_test_y)
+    # use RBF svm to classify accuracy equal 0.50
+    svm_model(train_x, test_x, train_y, test_y)
+    # svm_model(reduce_train_x, reduce_test_x, reduce_train_y, reduce_test_y)
+    # use naive bayes to classify accuracy equal 0.51
+    naive_model(train_x, test_x, train_y, test_y)
+    # use logistic to classify accuracy equal 0.57
+    logistic_model(train_x, test_x, train_y, test_y)
+    xgb_model(train_x, test_x, train_y, test_y)
+    Snow_naive_bayes()
+    end = time.time()
+    print ('Total Time :', end - start)
+ ```
+ 可以通过修改注释来进行测试，如`stop_word = get_stop_word()`是选择建模过程中是否去除停用词<br>
+ 
 3. 深度学习
 
 4. 基于预训练微调
