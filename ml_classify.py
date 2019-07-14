@@ -4,9 +4,9 @@ Author: Yuyuan's husband
 title: Sentiment by SVM or Bayes
 """
 from Tencent_word_Embedding import get_Word2Vec
-from Yuyuan_postgraduate_Boson_dict import get_stop_word
-from Yuyuan_postgraduate_Boson_dict import load_data
-from DQlihong_simple_word_embedding import load_Word2Vec_Model
+from boson_dict import get_stop_word
+from boson_dict import load_data
+# from DQlihong_simple_word_embedding import load_Word2Vec_Model
 from sklearn.cross_validation import train_test_split
 from sklearn.preprocessing import scale
 from sklearn.svm import SVC
@@ -30,6 +30,7 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from boson_dict_config import bonson_config as bc
 
 def get_tencent_word_embedding():
     # get tencent word embedding dict for convert phrase
@@ -242,11 +243,11 @@ def svm_model(train_x, test_x, train_y, test_y):
     # save model
     # joblib.dump(clf, 'RBF_SVM_modify_train_data_model.pkl')
 
-def one_hot_naive_bayes_model():
+def one_hot_naive_bayes_model(stopword_dir):
     pos_list, neutral_list, neg_list = get_data()
     # print (pos_list[0])
     res_dict = {}
-    stop_word_list = get_stop_word()
+    stop_word_list = get_stop_word(stopword_dir)
     def get_dict(list_, j):
         for sen in list_:
             for word in sen:
@@ -368,10 +369,10 @@ def xgb_model(train_x, test_x, train_y, test_y):
     # save model
     # joblib.dump(xgb, 'xgboost_modify_train_data_model.pkl')
 
-def Snow_naive_bayes():
+def Snow_naive_bayes(data_dir):
     from snownlp import SnowNLP
-    wb = load_workbook(r'C:\Dissertation\全网筛选数据-联通-汇总-1113.xlsx')
-    ws = wb.get_sheet_by_name('微博')
+    wb = load_workbook(data_dir)
+    ws = wb.get_sheet_by_name('Sheet1')
     res_dict = {}
     for i in range(1, ws.max_row):
         single = ws.cell(row=i + 1, column=9).value
@@ -412,7 +413,7 @@ def plot_confusion_matrix(cm, classes, title='Confusion matrix', cmap=plt.cm.Blu
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
 
-def get_sentiment_model():
+def get_sentiment_model(data_dir):
     start = time.time()
     # stop_word = get_stop_word()
     # use tencent word embedding
@@ -443,40 +444,40 @@ def get_sentiment_model():
     # use logistic to classify accuracy equal 0.57
     logistic_model(train_x, test_x, train_y, test_y)
     xgb_model(train_x, test_x, train_y, test_y)
-    Snow_naive_bayes()
+    Snow_naive_bayes(data_dir)
     end = time.time()
     print ('Total Time :', end - start)
 
-def get_test_data():
-    start = time.time()
-    wb = load_workbook(r'C:\Dissertation\微博测试样例数据-1113.xlsx')
-    ws = wb.get_sheet_by_name('Sheet1')
-    # print (ws.cell(row= 2, column=2).value)
-    test_list = []
-    for i in range(1, ws.max_row):
-        test_list.append(ws.cell(row = i+1, column = 2).value)
-    load_tencent_dict = json.loads(open('tencent_word_embedding_dict.json', 'r').read())
-    new_word = {}
-    for txt in test_list:
-        seg_list = jieba.cut(txt, cut_all = False)
-        for seg in seg_list:
-            if seg not in load_tencent_dict and seg != '':
-                new_word[seg] = 0
-    # 787 new seg word has been already get
-    # print (len(new_word))
-    for i in get_Word2Vec(8824330):
-        if i[0] in new_word:
-            try:
-                if len(i[1::]) == 200 and i[1::] != 0:
-                    new_word[i[0]] = i[1::]
-            except Exception as e:
-                print ('Error type', e,i)
-    merge_dict = dict(new_word, **load_tencent_dict)
-    with open('tencent_word_embedding_dict.json', 'w+') as json_file:
-        json.dump(merge_dict, json_file)
-    json_file.close()
-    end = time.time()
-    print ('JSON File has been done: ', end - start)
+# def get_test_data():
+#     start = time.time()
+#     wb = load_workbook(r'C:\Dissertation\微博测试样例数据-1113.xlsx')
+#     ws = wb.get_sheet_by_name('Sheet1')
+#     # print (ws.cell(row= 2, column=2).value)
+#     test_list = []
+#     for i in range(1, ws.max_row):
+#         test_list.append(ws.cell(row = i+1, column = 2).value)
+#     load_tencent_dict = json.loads(open('tencent_word_embedding_dict.json', 'r').read())
+#     new_word = {}
+#     for txt in test_list:
+#         seg_list = jieba.cut(txt, cut_all = False)
+#         for seg in seg_list:
+#             if seg not in load_tencent_dict and seg != '':
+#                 new_word[seg] = 0
+#     # 787 new seg word has been already get
+#     # print (len(new_word))
+#     for i in get_Word2Vec(8824330):
+#         if i[0] in new_word:
+#             try:
+#                 if len(i[1::]) == 200 and i[1::] != 0:
+#                     new_word[i[0]] = i[1::]
+#             except Exception as e:
+#                 print ('Error type', e,i)
+#     merge_dict = dict(new_word, **load_tencent_dict)
+#     with open('tencent_word_embedding_dict.json', 'w+') as json_file:
+#         json.dump(merge_dict, json_file)
+#     json_file.close()
+#     end = time.time()
+#     print ('JSON File has been done: ', end - start)
 
 def _test_save_model_validate():
     # when use new test only need load once
@@ -485,7 +486,7 @@ def _test_save_model_validate():
         pos_list = []
         neg_list = []
         neutral_list = []
-        wb = load_workbook(r'C:\Dissertation\微博测试样例数据-1113.xlsx')
+        wb = load_workbook(r'test_data_dir')
         ws = wb.get_sheet_by_name('Sheet1')
         for i in range(1, ws.max_row):
             single = ws.cell(row = i+1, column = 4).value
@@ -572,11 +573,11 @@ def get_variable_model_test():
 
 if __name__ == "__main__":
 
-    # get_tencent_word_embedding()
-    # import random
-    # random.seed(1)
-    # get_sentiment_model()
-    # _test_save_model_validate()
-    # test_x = '新买的手机的信号还可以，没有预期的期望高，不过对于我来说也还可以了'
-    # real_predict(test_x)
+    get_tencent_word_embedding()
+    import random
+    random.seed(1)
+    get_sentiment_model(bc.data)
+    _test_save_model_validate()
+    test_x = '新买的手机的信号还可以，没有预期的期望高，不过对于我来说也还可以了'
+    real_predict(test_x)
     get_variable_model_test()
