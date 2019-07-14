@@ -36,7 +36,7 @@
 
 ## 整体思路
   本文从数据的预处理到后续建模都将进行详细的介绍，大体分为数据的预处理（文本正则化、停用词过滤等）、样本集划分、数据的向量化表示、模型训练与保存、模型的测试指标,实验思路以及具体的代码介绍将在[建模过程](#建模过程)中详细介绍<br>
-  `Details:`<br>对于机器学习和深度学习中，采用8：2的比例随机抽取清洗后的数据当作训练集与测试集，并且为了同时对比它们以至于后续的预训练微调的模型效果，通过将训练集和测试集保存为json格式文件，后续直接调用json文件当作训练集和测试集即可。而对于将文本数据转化为向量表示，在机器学习和深度学习中本文对比了利用中文维基百科基于Word2Vec训练的词向量以及去年腾讯开源的900W词向量的模型效果，在finetune中使用BERT和XLNet预训练模型进行微调对比。
+  `Details:`<br>对于机器学习和深度学习中，采用8：2的比例随机抽取清洗后的数据当作训练集与验证集，并且为了同时对比它们以至于后续的预训练微调的模型效果，通过将训练集和验证集保存为json格式文件，后续直接调用json文件当作训练集和验证集即可。而对于将文本数据转化为向量表示，在机器学习和深度学习中本文对比了利用中文维基百科基于Word2Vec训练的词向量以及去年腾讯开源的900W词向量的模型效果，在finetune中使用BERT和XLNet预训练模型进行微调对比。
   
 ## 模型的评价指标
 
@@ -82,7 +82,7 @@
     # real_predict(test_x)
     get_variable_model_test()
 ```
-使用其中的`get_variable_model_test()`函数，先debug到下方`json.jump`处,此处是用来将我们存在excel中的文本数据进行清理得到正则化后的数据，并将其进行词向量表示，本文中选取了两种形式，即利用中文维基百科训练的Word2Vec词向量，以及腾讯开源的900W的词向量（之所以没有用BERT进行微调是因为这个是去年9月份写的，那会儿BERT还没出来，后续深度学习中我们会应用BERT句向量）
+使用其中的`get_variable_model_test()`函数，先debug到下方`json.jump`处,此处是用来将我们存在excel中的文本数据进行清理得到正则化后的数据，并将其进行词向量表示，本文中选取了两种形式，即利用中文维基百科训练的Word2Vec词向量（这里仅用了腾讯开源的词向量，但当初我也试验了中文维基百科的词向量，腾讯的建模效果要好很多，网上很多开源的训练好的词向量，就是把词向量替换即可，较为容易），以及腾讯开源的900W的词向量（之所以没有用BERT进行微调是因为这个是去年9月份写的，那会儿BERT还没出来，后续深度学习中我们会应用BERT句向量）
  ```python 
   def get_variable_model_test():
     get regular train and test data
@@ -95,7 +95,7 @@
     test_y = test_y.tolist()
     json.dump([train_x, test_x, train_y, test_y],open('train_x.json', 'w'))
   ```
-<br>而主要的建模过程如下所示
+<br>而主要的建模过程如下所示,其中利用的`get_Word2Vec(8824330)`函数是我针对腾讯900W词向量自己写的一个简单的迭代读取的脚本，在`Tencent_word_Embedding`中大家可以自行尝试观察腾讯的200维词向量的余弦相似度。
 ```python
 def get_tencent_word_embedding():
     # get tencent word embedding dict for convert phrase
@@ -159,10 +159,36 @@ def get_sentiment_model():
     end = time.time()
     print ('Total Time :', end - start)
  ```
- 可以通过修改注释来进行测试，如`stop_word = get_stop_word()`是选择建模过程中是否去除停用词<br>
- 
+ 可以通过修改注释来对单个模型进行分别训练，如`stop_word = get_stop_word()`是选择建模过程中是否去除停用词<br>
+ 这里logistic、randomforest、sgd、svm、naive_bayes、Xgb一共六种主流的分类器进行对比测试，另外`Snow_naive_bayes(data_dir)`中使用了目前比较流行的中文NLP包，SnowNLP库中的情感分析模块进行对比测试，其建模核心也是基于朴素贝叶斯的思想。<br>
+ 每个分类模型中的`plot_confusion_matrix(cnf_matrix, classes=class_names, title='Logistic Confusion matrix')`是用来生成其混淆矩阵，即得到上方我们统计各类评价指标所用的`confusion matrix`<br>
+另外`def _test_save_model_validate():`函数是用来对excel中的数据进行测试，需要自行修改`def get_new_test_list():`函数中的路径、数据cell的位置，也可以直接用csv或者json自己写训练数据的读取形式，之后`loading_save_model(model, test_x, test_y, classifyname):`函数中可以自行选择想要对比验证的模型类型，`svm = joblib.load('RBF_SVM_modify_train_data_model.pkl')`中加载其保存路径即可。<br>
+
 3. 深度学习
 
 4. 基于预训练微调
 
 ## 结果展示
+
+其中波森情感词典、机器学习各种分类模型、深度学习各类模型应用腾讯200维词向量的训练结果如图所示：
+
+|Model_type|Accuracy|Avg(P)|Avg(R)|Avg(F1)|
+|--|--|--|--|--|
+| 波森情感词典 | 0.34 | 0.46 | 0.49 | 0.40 |
+| 基于词性的波森情感词典 | 0.58 | 0.60 | 0.46 | 0.51 |
+| Logistic回归 | 0.77 | 0.77 | 0.77 | 0.77 |
+| 梯度下降法 | 0.75 | 0.78 | 0.77 | 0.76 |
+| 朴素贝叶斯 | 0.62 | 0.64 | 0.62 | 0.62 |
+| 支持向量机 | 0.76 | 0.76 | 0.76 | 0.76 |
+| 随机森林 | 0.90 | 0.90 | 0.90 | 0.90 |
+| XGBoost | 0.91 | 0.91 | 0.91 | 0.91 |
+| 多层感知机 | 0.89 | 0.89 | 0.83 | 0.88 |
+| 循环神经网络 | 0.91 | 0.90 | 0.89 | 0.90 |
+| 卷积神经网络 | 0.88 | 0.87 | 0.83 | 0.85 |
+| 自注意力机制 | 0.91 | 0.91 | 0.91 | 0.91 |
+
+
+
+
+
+
