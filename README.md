@@ -165,6 +165,7 @@ def get_sentiment_model():
 另外`def _test_save_model_validate():`函数是用来对excel中的数据进行测试，需要自行修改`def get_new_test_list():`函数中的路径、数据cell的位置，也可以直接用csv或者json自己写训练数据的读取形式，之后`loading_save_model(model, test_x, test_y, classifyname):`函数中可以自行选择想要对比验证的模型类型，`svm = joblib.load('RBF_SVM_modify_train_data_model.pkl')`中加载其保存路径即可。<br>
 
 3. 深度学习
+
 由于目前神经网络、深度学习大热，故此文本主要介绍这部分的内容。<br>
 在深度学习中，做分类任务主要有几大类，首先是最原始的多层感知机，即常说的`BP`神经网络，其构造简单，最后通过全连接层来实现分类任务。<br>
 `RNN`系列的`LSTM`，利用门结构来对上一时刻的信息进行取舍来构建文本之间的联系，通过判断句子前后的联系来进行建模，对于时间序列数据有着得天独厚的优势,而文本输入本就是符合时间递进关系，可以理解为一个马尔可夫过程，因此，对于文本情感分析中，在神经网络中最常用的是`LSTM、GRU、Bi-LSTM`等LSTM的变种系列<br>
