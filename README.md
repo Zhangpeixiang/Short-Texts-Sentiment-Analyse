@@ -172,7 +172,11 @@ def get_sentiment_model():
 由于`CV`方面进行的如火如荼，基于已经成熟的图像分类算法，也有人尝试利用`CNN`进行文本分类，其思路和之前的`LSTM`等不同的是，`LSTM`是将文本拼接为一列，每一时刻送入一个词或者字符级别的Embedding，而CRNN是将文本序列转化为图像的像素形式，即，对于固定唯独的词或字符级别的向量，其唯独即为图像的长，文本序列的长度为高。总结起来，RNN系列是横向拼接文本序列，CNN系列是纵向拼接文本序列。相比于`RNN`，`CNN`的优势在于利用卷积窗口，可以并行计算。<br>
 最后介绍一下2017年最火的注意力机制(`Attention`)，其主要的特点是在于改进输入的方式，首先利用位置矩阵对于输入的向量进行位置编码的加权，使得其输入天然具有位置信息，另外其利用编码、解码(`Seq2Seq`)的思想，在编码输入向量为一个矩阵时，记录了其位置信息，使得解码过程中更关注于相对应位置的解码问题，注意力机制本就是为了完善`Seq2Seq`而诞生的，相比于`RNN`系列关注上一时刻的输入，它更关注全局所有变量的输入，而编码解码方式的引进代替传统的`RNN`结构，使得他可以并行计算，运行速度比RNN系列快不少。可能有人有疑问，RNN系列通过遗忘门和细胞状态也可以记录之前的信息，为什么`Attention`机制要优于`RNN`系列？虽然`RNN`通过其门的结构对于之前的信息进行捕捉，但由于文本序列一般输入较长，RNN系列更加关注距离他比较近的时刻的输入，最初的输入信息在迭代中几乎已经消失了，这也是RNN的弊端，`Attention`就是将这种捕捉之前的信息引入了全局中，并在解码中一一对应的解码，故此，也是注意力机制名称的来源。
 本场景仅以MLP为例，其他场景只要修改为相应的函数即可，都同理：<br>
-MLP的模型训练的流程图图下所示，通过添加recall、precsion、f1等评价指标，可以在每个epoch观测模型的变化，业务场景,并且在模型结束后，画出其训练和验证时刻的loss曲线和Auc曲线，如果想看训练实时的训练，可以在模型中添加一行tensorboard的日志保存命令，并使用log来画图，很简单，网上一搜即可。<br>
+MLP的模型训练的流程图图下所示，通过添加recall、precsion、f1等评价指标，可以在每个epoch观测模型的变化，业务场景,并且在模型结束后，画出其训练和验证时刻的loss曲线和Auc曲线，如果想看训练实时的train_auc,train_loss和val_auc以及val_loss，可以在模型训练中添加一行tensorboard的日志保存命令:<br>
+```python
+tensorboard = TensorBoard(log_dir='../train_graph/logs', write_graph=True)
+```
+并使用log来画图，在保存log的地方用cmd输入`tensorboard --logdir='你的log地址'`即可。<br>
 
 ![Image text](https://raw.githubusercontent.com/Zhangpeixiang/Short-Texts-Sentiment-Analyse/master/image_folder/BP_train_plot.jpg)<br>
 ![Image text](https://raw.githubusercontent.com/Zhangpeixiang/Short-Texts-Sentiment-Analyse/master/image_folder/BP_train_plot1.jpg)<br>
