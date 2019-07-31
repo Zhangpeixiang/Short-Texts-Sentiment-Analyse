@@ -27,6 +27,7 @@ from keras.layers.core import Dense, Dropout, Activation, Flatten
 from keras.models import Model
 from keras.layers import *
 import numpy as np
+import os
 from keras.engine.topology import Layer
 from keras.utils import np_utils
 import matplotlib.pyplot as plt
@@ -601,15 +602,57 @@ def attention_keras():
 
     model.save('./Sentiment_models/Attention_model.h5')
 
-if __name__ == "__main__":
+def main():
     # cnn_1D_model()
     # 2DCNN 的准确率在92%
-    # cnn_2D_model()
+    cnn_2D_model()
     # MLP 模型的准确率在89%
     MLP_model()
     # lstm模型的准确率在91.67%
-    # lstm_model()
+    lstm_model()
     # attention的准确率在92%
-    # attention_keras()
+    attention_keras()
+    print('All model has been done')
+
+def model_transfer(model_dir):
+
+    def load_model():
+        classes = 3
+        hidden_size = 128
+        dropout = .3
+        model = Sequential()
+        model.add(Dense(hidden_size, input_shape=(200,)))
+        model.add(Activation('relu'))
+        model.add(Dropout(dropout))
+        model.add(Dense(hidden_size))
+        model.add(Activation('relu'))
+        model.add(Dropout(dropout))
+        model.add(Dense(classes))
+        model.add(Activation('softmax'))
+        # model.summary()
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy', Precision, Recall, F1])
+        return model
+
+    def load_weight(modelPath, basemodel):
+        # modelPath = 'C:/JH_project/OCR_model/CRNN_model/densenet_weights-183-1.94.h5'
+        # modelPath = 'C:/JH_project/OCR_model/CRNN_model/densenet_weights-116-0.29.h5'
+        if os.path.exists(modelPath):
+            print("Loading model weights...")
+            basemodel.load_weights(modelPath)
+            print('done!')
+        return basemodel
+    basemodel = load_model()
+    model = load_weight(model_dir, basemodel)
+    # 此处需要自行补充，格式跟训练集和验证集保持一致即可，可直接对其代码稍作修改
+    test_data, true_data = open('test_data_dir.json', 'r', encoding='utf-8')
+    model.predict(test_data, true_data)
+    # 评价指标自行选取
+
+if __name__ == "__main__":
+    main()
+    # dir = './Sentiment_models/BP_model.h5'
+    # model_transfer(dir)
+
+
 
 
