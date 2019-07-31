@@ -1,15 +1,16 @@
 """
 time: 2018/12/13
-title: deep learning in Emotional with keras by using CNN
+title: deep learning in Emotional with keras by using Deep Learning
 author: yuyuan's husband
 case of terrible accuracy in test and validation ,we attempt to use binary category in sentiment.
 """
 from __future__ import print_function
-from Yuan_postgraduate_SVMorBayes import get_data
-from Yuan_postgraduate_SVMorBayes import prepare_train_data
-from Yuan_postgraduate_SVMorBayes import build_vecs_tencent
-from Yuyuan_postgraduate_Boson_dict import get_stop_word
-from Yuyuan_postgraduate_Boson_dict import load_data
+from ml_classify import get_data
+from ml_classify import prepare_train_data
+from ml_classify import build_vecs_tencent
+from ml_classify import get_stop_word
+from ml_classify import load_data
+from ml_classify import confusion_matrix,plot_confusion_matrix
 import re
 import jieba
 import json
@@ -20,6 +21,7 @@ from keras.callbacks import Callback
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score
 from keras.models import Sequential
 from sklearn import metrics
+from keras import backend as K
 from keras.layers import Convolution2D, MaxPooling2D
 from keras.layers.core import Dense, Dropout, Activation, Flatten
 from keras.models import Model
@@ -28,7 +30,8 @@ import numpy as np
 from keras.engine.topology import Layer
 from keras.utils import np_utils
 import matplotlib.pyplot as plt
-from Yuan_postgraduate_SVMorBayes import confusion_matrix,plot_confusion_matrix
+
+# from Yuan_postgraduate_SVMorBayes import confusion_matrix,plot_confusion_matrix
 
 # class Metrics(Callback):
 #     def on_train_begin(self, logs={}):
@@ -37,44 +40,39 @@ from Yuan_postgraduate_SVMorBayes import confusion_matrix,plot_confusion_matrix
 #         self.val_precisions = []
 #
 #     def on_epoch_end(self, epoch, logs={}):
-# #         val_predict = (np.asarray(self.model.predict(self.validation_data[0]))).round()
-#         val_predict = np.argmax(np.asarray(self.model.predict(self.validation_data[0])), axis=1)
-# #         val_targ = self.validation_data[1]
-#         val_targ = np.argmax(self.validation_data[1], axis=1)
-#         _val_f1 = f1_score(val_targ, val_predict, average='macro')
-# #         _val_recall = recall_score(val_targ, val_predict)
-# #         _val_precision = precision_score(val_targ, val_predict)
+#         val_predict = (np.asarray(self.model.predict(self.model.validation_data[0]))).round()
+#         val_targ = self.model.validation_data[1]
+#         _val_f1 = f1_score(val_targ, val_predict)
+#         _val_recall = recall_score(val_targ, val_predict)
+#         _val_precision = precision_score(val_targ, val_predict)
 #         self.val_f1s.append(_val_f1)
-# #         self.val_recalls.append(_val_recall)
-# #         self.val_precisions.append(_val_precision)
-# #         print('— val_f1: %f — val_precision: %f — val_recall %f' %(_val_f1, _val_precision, _val_recall))
-#         print(' — val_f1:' ,_val_f1)
+#         self.val_recalls.append(_val_recall)
+#         self.val_precisions.append(_val_precision)
+#         print('-val_f1: %.4f --val_precision: %.4f --val_recall: %.4f' % (_val_f1, _val_precision, _val_recall))
 #         return
 #
-# #
 # metrics = Metrics()
 
+def Precision(y_true, y_pred):
+    """精确率"""
+    tp = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))  # true positives
+    pp = K.sum(K.round(K.clip(y_pred, 0, 1)))  # predicted positives
+    precision = tp / (pp + K.epsilon())
+    return precision
 
-class Metrics(Callback):
-    def on_train_begin(self, logs={}):
-        self.val_f1s = []
-        self.val_recalls = []
-        self.val_precisions = []
+def Recall(y_true, y_pred):
+    """召回率"""
+    tp = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))  # true positives
+    pp = K.sum(K.round(K.clip(y_true, 0, 1)))  # possible positives
+    recall = tp / (pp + K.epsilon())
+    return recall
 
-    def on_epoch_end(self, epoch, logs={}):
-        val_predict = (np.asarray(self.model.predict(self.model.validation_data[0]))).round()
-        val_targ = self.model.validation_data[1]
-        _val_f1 = f1_score(val_targ, val_predict)
-        _val_recall = recall_score(val_targ, val_predict)
-        _val_precision = precision_score(va_targ, val)
-        self.val_f1s.append(_val_f1)
-        self.val_recalls.append(_val_recall)
-        self.val_precisions.append(_val_precision)
-        print('-val_f1: %.4f --val_precision: %.4f --val_recall: %.4f' % (_val_f1, _val_precision, _val_recall))
-        return
-
-metrics = Metrics()
-
+def F1(y_true, y_pred):
+    """F1-score"""
+    precision = Precision(y_true, y_pred)
+    recall = Recall(y_true, y_pred)
+    f1 = 2 * ((precision * recall) / (precision + recall + K.epsilon()))
+    return f1
 
 class Position_Embedding(Layer):
     def __init__(self, size=None, mode='sum', **kwargs):
@@ -345,7 +343,7 @@ def cnn_1D_model():
     # score = model.evaluate(X_test, test_y, verbose=0)
     # print ('Test score: ', score[0])
     # print ('Test accuracy: ', score[1])
-    model.save(r'C:\Dissertation\Yuyuan_CNN1D_keras.h5')
+    model.save('./Sentiment_models/CNN1D_model.h5')
 
 class LeNet:
     @staticmethod
@@ -413,11 +411,11 @@ def cnn_2D_model():
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
     plt.show()
-    model.save(r'C:\Dissertation\Yuyuan_CNN2D_keras.h5')
+    model.save('./Sentiment_models/CNN_model.h5')
 
 def MLP_model():
 
-    epoch = 2
+    epoch = 100
     batch_size = 128
     verbose = 2
     classes = 3
@@ -447,10 +445,10 @@ def MLP_model():
     model.add(Dense(classes))
     model.add(Activation('softmax'))
     # model.summary()
-    model.compile(loss='categorical_crossentropy', optimizer = 'adam', metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer = 'adam', metrics=['accuracy',
+                                                                                Precision, Recall, F1])
     history = model.fit(x_train, y_train, batch_size=batch_size, epochs=epoch, verbose=verbose,
                         validation_data=(x_test, y_test))
-                        # validation_data=(x_test, y_test), callbacks =[metrics])
     # model.summary()
     score = model.evaluate(x_test, y_test, verbose=verbose)
     print('bp_model test loss:', score[0])
@@ -469,7 +467,7 @@ def MLP_model():
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
     plt.show()
-    model.save(r'C:\Dissertation\Yuyuan_real_BP_keras.h5')
+    model.save('./Sentiment_models/BP_model.h5')
 
     # pred = model.predict(x_test)
 
@@ -527,7 +525,7 @@ def lstm_model():
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
     plt.show()
-    model.save(r'C:\Dissertation\Yuyuan_LSTM_keras.h5')
+    model.save('./Sentiment_models/Bi-LSTM_model.h5')
 
 def attention_keras():
     train_x, test_x, train_y, test_y = load_number_data()
@@ -601,8 +599,7 @@ def attention_keras():
     plt.legend(['train', 'test'], loc='upper left')
     plt.show()
 
-
-    model.save(r'C:\Dissertation\Yuyuan_Attention_keras.h5')
+    model.save('./Sentiment_models/Attention_model.h5')
 
 if __name__ == "__main__":
     # cnn_1D_model()
