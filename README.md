@@ -181,7 +181,7 @@ tensorboard = TensorBoard(log_dir='../train_graph/logs', write_graph=True)
 ![Image text](https://raw.githubusercontent.com/Zhangpeixiang/Short-Texts-Sentiment-Analyse/master/image_folder/BP_train_plot.jpg)<br>
 ![Image text](https://raw.githubusercontent.com/Zhangpeixiang/Short-Texts-Sentiment-Analyse/master/image_folder/BP_train_plot1.jpg)<br>
 ![Image text](https://raw.githubusercontent.com/Zhangpeixiang/Short-Texts-Sentiment-Analyse/master/image_folder/BP_train_plot2.jpg)<br>
-
+以上是整个模型的训练过程，模型调用过程也很方便，还是以MLP为例：<br>
 4. 基于预训练微调
 
 ## 结果展示
