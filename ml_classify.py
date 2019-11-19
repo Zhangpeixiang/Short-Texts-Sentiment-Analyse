@@ -36,7 +36,7 @@ def get_tencent_word_embedding():
     # get tencent word embedding dict for convert phrase
     start = time.time()
     tencent_word_matrix = {}
-    data = load_data()
+    data = load_data('./data/data.xlsx')
     for uuid, txt in tqdm(data.items()):
         cut_txt = jieba.cut(txt[0], cut_all = False)
         for seg in cut_txt:
@@ -61,7 +61,7 @@ def get_data():
     pos_list = []
     neg_list = []
     neutral_list = []
-    data = load_data()
+    data = load_data('./data/data.xlsx')
     for uuid in data:
         if data[uuid][1] == 0:
             neg_list.append(data[uuid][0])
