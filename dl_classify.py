@@ -262,7 +262,7 @@ def load_embedding_data():
 def load_number_data():
     pos_list, neutral_list, neg_list = get_data()
     def get_num_dict():
-        data = load_data()
+        data = load_data('./data/data.xlsx')
         num_list = []
         for uuid in data:
             seg_list = jieba.cut(data[uuid][0], cut_all = False)
